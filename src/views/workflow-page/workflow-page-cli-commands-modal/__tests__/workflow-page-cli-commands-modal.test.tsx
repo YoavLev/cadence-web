@@ -13,6 +13,18 @@ import {
 
 type AllowedMockGroups = 'mockDomain' | 'mockWorkflow';
 
+const mockParams = {
+  domain: 'test-domain',
+  cluster: 'test-cluster',
+  workflowId: 'test-workflow-id',
+  runId: 'test-run-id',
+};
+
+jest.mock('next/navigation', () => ({
+  ...jest.requireActual('next/navigation'),
+  useParams: () => mockParams,
+}));
+
 jest.mock('@/components/copy-text-button/copy-text-button', () =>
   jest.fn((props) => (
     <button data-testid="copy-text-button" onClick={() => props.textToCopy}>
@@ -37,18 +49,19 @@ jest.mock(
       {
         label: 'List Domains',
         description: 'Displays a list of all domains',
-        command: 'cadence list domains',
+        command: 'cadence --domain {domain-name} list domains',
         group: 'mockDomain',
       },
       {
         label: 'Create Domain',
         description: 'Creates a new domain with the specified name',
-        command: 'cadence create domain',
+        command: 'cadence --domain {domain-name} create domain',
         group: 'mockDomain',
       },
       {
         label: 'Run workflow',
-        command: 'cadence run workflow',
+        command:
+          'cadence --domain {domain-name} workflow run -w {workflow-id} -r {run-id}',
         group: 'mockWorkflow',
       },
     ] as const satisfies CliCommandConfigs<AllowedMockGroups>
@@ -124,6 +137,32 @@ describe('WorkflowPageCliCommandsModal', () => {
     expect(screen.getAllByTestId('copy-text-button').length).toBe(
       initialTabCommands.length
     );
+  });
+
+  it('substitutes URL params into commands', () => {
+    setup({});
+    expect(
+      screen.getByText(
+        'cadence --domain test-domain list domains'
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/\{domain-name\}/)
+    ).not.toBeInTheDocument();
+  });
+
+  it('substitutes all params including workflow and run IDs', async () => {
+    const { user } = setup({});
+
+    // Switch to the workflow tab
+    const workflowTab = workflowPageCliCommandsGroupsConfig[1];
+    await user.click(screen.getByText(workflowTab.title));
+
+    expect(
+      screen.getByText(
+        'cadence --domain test-domain workflow run -w test-workflow-id -r test-run-id'
+      )
+    ).toBeInTheDocument();
   });
 });
 
