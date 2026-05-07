@@ -15,12 +15,17 @@ export default function DomainBatchActionsNewActionFloatingBar({
   actions,
   onActionClick,
   disabled,
+  errorMessage,
 }: Props) {
   return (
     <styled.Container role="region" aria-label="Batch action floating bar">
-      <styled.Summary>
-        {selectedCount} of {totalCount} workflows included
-      </styled.Summary>
+      {errorMessage ? (
+        <styled.ErrorSummary>{errorMessage}</styled.ErrorSummary>
+      ) : (
+        <styled.Summary>
+          {selectedCount} of {totalCount} workflows included
+        </styled.Summary>
+      )}
       <styled.Actions>
         {actions.map((action) => (
           <Button
@@ -31,7 +36,7 @@ export default function DomainBatchActionsNewActionFloatingBar({
             overrides={overrides.actionButton}
             startEnhancer={<action.icon />}
             onClick={() => onActionClick(action.id)}
-            disabled={disabled}
+            disabled={disabled || Boolean(errorMessage)}
           >
             {action.label}
           </Button>

@@ -33,6 +33,14 @@ export const styled = {
       whiteSpace: 'nowrap',
     })
   ),
+  ErrorSummary: createStyled(
+    'div',
+    ({ $theme }: { $theme: Theme }): StyleObject => ({
+      ...$theme.typography.LabelSmall,
+      whiteSpace: 'nowrap',
+      color: $theme.colors.contentNegative,
+    })
+  ),
   Actions: createStyled(
     'div',
     ({ $theme }: { $theme: Theme }): StyleObject => ({

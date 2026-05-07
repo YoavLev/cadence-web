@@ -54,6 +54,21 @@ describe(DomainBatchActionsNewActionFloatingBar.name, () => {
     expect(screen.getByRole('button', { name: /Terminate/ })).toBeDisabled();
     expect(screen.getByRole('button', { name: /Signal/ })).toBeDisabled();
   });
+
+  it('shows error message instead of summary when errorMessage is set', () => {
+    setup({ errorMessage: 'Something went wrong' });
+
+    expect(screen.getByText('Something went wrong')).toBeInTheDocument();
+    expect(screen.queryByText(/workflows included/)).not.toBeInTheDocument();
+  });
+
+  it('disables action buttons when errorMessage is set', () => {
+    setup({ errorMessage: 'Something went wrong' });
+
+    expect(screen.getByRole('button', { name: /Cancel/ })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /Terminate/ })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /Signal/ })).toBeDisabled();
+  });
 });
 
 function setup({
@@ -61,11 +76,13 @@ function setup({
   totalCount = 32,
   actions = mockActions,
   disabled,
+  errorMessage,
 }: {
   selectedCount?: number;
   totalCount?: number;
   actions?: DomainBatchActionsNewActionFloatingBarActionConfig[];
   disabled?: boolean;
+  errorMessage?: string;
 }) {
   const onActionClick = jest.fn();
   const user = userEvent.setup();
@@ -77,6 +94,7 @@ function setup({
       actions={actions}
       onActionClick={onActionClick}
       disabled={disabled}
+      errorMessage={errorMessage}
     />
   );
 

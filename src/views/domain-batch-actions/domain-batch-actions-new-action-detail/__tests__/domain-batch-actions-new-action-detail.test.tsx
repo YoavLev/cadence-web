@@ -7,6 +7,7 @@ import { render, screen, userEvent, waitFor } from '@/test-utils/rtl';
 import { getMockWorkflowListItem } from '@/route-handlers/list-workflows/__fixtures__/mock-workflow-list-items';
 import { type ListWorkflowsResponse } from '@/route-handlers/list-workflows/list-workflows.types';
 import { mockDomainPageQueryParamsValues } from '@/views/domain-page/__fixtures__/domain-page-query-params';
+import { type CountWorkflowsResponse } from '@/views/shared/hooks/use-count-workflows.types';
 import { mockWorkflowsListSystemColumns } from '@/views/shared/workflows-list/__fixtures__/mock-workflows-list-columns';
 
 import { type Props as MSWMocksHandlersProps } from '../../../../test-utils/msw-mock-handlers/msw-mock-handlers.types';
@@ -18,9 +19,7 @@ jest.mock('react-icons/md', () => ({
 }));
 
 jest.mock('query-string', () => ({
-  stringifyUrl: jest.fn(
-    () => '/api/domains/test-domain/test-cluster/workflows'
-  ),
+  stringifyUrl: jest.fn(({ url }: { url: string }) => url),
 }));
 
 jest.mock(
@@ -104,11 +103,27 @@ describe(DomainBatchActionsNewActionDetail.name, () => {
     expect(screen.queryByText('Workflow Type')).not.toBeInTheDocument();
   });
 
-  it('shows the floating bar with the fetched workflow count', async () => {
-    setup({ workflowCount: 7 });
+  it('shows the floating bar with the count from the count API', async () => {
+    setup({ workflowCount: 3, totalCount: 7 });
 
     expect(
       await screen.findByText(/7 of 7 workflows included/i)
+    ).toBeInTheDocument();
+  });
+
+  it('shows total count from count API when available', async () => {
+    setup({ workflowCount: 3, totalCount: 50 });
+
+    expect(
+      await screen.findByText(/50 of 50 workflows included/i)
+    ).toBeInTheDocument();
+  });
+
+  it('shows error message on floating bar when count API fails', async () => {
+    setup({ workflowCount: 3, countError: true });
+
+    expect(
+      await screen.findByText('Unable to count workflows, please try again')
     ).toBeInTheDocument();
   });
 
@@ -126,9 +141,13 @@ describe(DomainBatchActionsNewActionDetail.name, () => {
 function setup({
   onDiscard = jest.fn(),
   workflowCount = 1,
+  totalCount = 100,
+  countError = false,
 }: {
   onDiscard?: () => void;
   workflowCount?: number;
+  totalCount?: number;
+  countError?: boolean;
 }) {
   const user = userEvent.setup();
   const response: ListWorkflowsResponse = {
@@ -139,6 +158,10 @@ function setup({
       })
     ),
     nextPage: '',
+  };
+
+  const countResponse: CountWorkflowsResponse = {
+    count: totalCount,
   };
 
   render(
@@ -154,6 +177,18 @@ function setup({
           httpMethod: 'GET',
           mockOnce: false,
           httpResolver: async () => HttpResponse.json(response),
+        },
+        {
+          path: '/api/domains/:domain/:cluster/workflows/count',
+          httpMethod: 'GET',
+          mockOnce: false,
+          httpResolver: async () =>
+            countError
+              ? HttpResponse.json(
+                  { message: 'Internal error' },
+                  { status: 500 }
+                )
+              : HttpResponse.json(countResponse),
         },
       ] as MSWMocksHandlersProps['endpointsMocks'],
     }

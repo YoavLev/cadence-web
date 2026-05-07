@@ -14,6 +14,7 @@ import domainPageQueryParamsConfig from '@/views/domain-page/config/domain-page-
 import domainWorkflowsFiltersConfig from '@/views/domain-workflows/config/domain-workflows-filters.config';
 import DOMAIN_WORKFLOWS_PAGE_SIZE from '@/views/domain-workflows/config/domain-workflows-page-size.config';
 import getWorkflowsErrorPanelProps from '@/views/domain-workflows/domain-workflows-table/helpers/get-workflows-error-panel-props';
+import useCountWorkflows from '@/views/shared/hooks/use-count-workflows';
 import useListWorkflows from '@/views/shared/hooks/use-list-workflows';
 import WorkflowsHeader from '@/views/shared/workflows-header/workflows-header';
 import useWorkflowsListColumns from '@/views/shared/workflows-list/hooks/use-workflows-list-columns';
@@ -83,6 +84,16 @@ export default function DomainBatchActionsNewActionDetail({
     query: queryParams.batchQuery,
   });
 
+  const { count: totalWorkflowCount, error: countError } = useCountWorkflows({
+    domain,
+    cluster,
+    query: queryParams.batchQuery,
+  });
+
+  const countErrorMessage = countError
+    ? 'Unable to count workflows, please try again'
+    : undefined;
+
   const errorPanelProps =
     workflows.length === 0
       ? getWorkflowsErrorPanelProps({
@@ -143,17 +154,13 @@ export default function DomainBatchActionsNewActionDetail({
       )}
       {workflows.length > 0 && (
         <styled.FloatingBarSlot>
-          {/* TODO: totalCount currently reflects only the workflows already
-              loaded by useInfiniteQuery, not the true match count for the
-              query. Wire up the CountWorkflowExecutions visibility API
-              (proto types already generated) so the bar shows the real
-              total across all pages. */}
           <DomainBatchActionsNewActionFloatingBar
-            selectedCount={workflows.length}
-            totalCount={workflows.length}
+            selectedCount={totalWorkflowCount ?? 0}
+            totalCount={totalWorkflowCount ?? 0}
             actions={domainBatchActionsNewActionFloatingBarConfig}
             onActionClick={handleActionClick}
             disabled={hasValidationErrors}
+            errorMessage={countErrorMessage}
           />
         </styled.FloatingBarSlot>
       )}
