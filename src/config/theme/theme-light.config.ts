@@ -16,6 +16,8 @@ const themeLight = {
     backgroundWarningLight: '#FDF2DC',
     backgroundPositive: '#0E8345',
     backgroundTableStriped: '#F8F8F8',
+    backgroundAccentLight: '#DEE9FE',
+    backgroundAccentLightHover: '#C9DAFC',
   },
   borders: {
     buttonBorderRadiusMini: '8px',
