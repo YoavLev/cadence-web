@@ -56,16 +56,46 @@ export type BatchActionModalConfig<
     | BatchActionModalNoFormVariant
   );
 
+// Mirrors the batcher's HeartBeatDetails progress counts. `completed` is
+// `successCount + errorCount` and `totalEstimate` is the estimated workflow count.
+export type BatchActionProgress = {
+  totalEstimate: number;
+  successCount: number;
+  errorCount: number;
+};
+
 export type BatchAction = {
   id: string;
   status: BatchActionStatus;
-  progress?: number; // 0-100, only relevant when status is 'RUNNING'
-  actionType?: BatchActionType; // absent if BatchType is missing from the batcher input
+  // Present while RUNNING (live activity heartbeat) and when COMPLETED (final
+  // workflow result). Absent for aborted/failed actions or before counts exist.
+  progress?: BatchActionProgress;
+  actionType?: BatchActionType; // absent if BatchType is not UI-supported
   startTime?: number;
   endTime?: number;
   rps?: number;
   concurrency?: number;
 };
+
+// Source of truth for the confirmation modal config. The config object must
+// comply with this type. `Partial` lets the config omit any action
+// and prevent adding an unsupported one.
+// export type BatchActionsConfirmationModalConfig = Partial<{
+//   cancel: BatchActionModalConfigNoForm;
+//   terminate: BatchActionModalConfigNoForm;
+//   signal: BatchActionModalConfigWithForm<
+//     SignalWorkflowFormData,
+//     SignalWorkflowSubmissionData
+//   >;
+// }>;
+
+// export type BatchActionConfirmPayload = {
+//   [K in keyof BatchActionsConfirmationModalConfig]-?: NonNullable<
+//     BatchActionsConfirmationModalConfig[K]
+//   > extends BatchActionModalConfigWithForm<any, infer S>
+//     ? { actionId: K; submissionData: S }
+//     : { actionId: K };
+// }[keyof BatchActionsConfirmationModalConfig];
 
 export type BatchActionConfirmPayload<SubmissionData> = {
   actionId: BatchActionType;
