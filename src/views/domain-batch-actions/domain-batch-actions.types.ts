@@ -56,10 +56,20 @@ export type BatchActionModalConfig<
     | BatchActionModalNoFormVariant
   );
 
+// Mirrors the batcher's HeartBeatDetails progress counts. `completed` is
+// `successCount + errorCount` and `totalEstimate` is the estimated workflow count.
+export type BatchActionProgress = {
+  totalEstimate: number;
+  successCount: number;
+  errorCount: number;
+};
+
 export type BatchAction = {
   id: string;
   status: BatchActionStatus;
-  progress?: number; // 0-100, only relevant when status is 'RUNNING'
+  // Present while RUNNING (live activity heartbeat) and when COMPLETED (final
+  // workflow result). Absent for aborted/failed actions or before counts exist.
+  progress?: BatchActionProgress;
   actionType?: BatchActionType; // absent if BatchType is missing from the batcher input
   startTime?: number;
   endTime?: number;
